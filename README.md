@@ -302,44 +302,55 @@ python src/evaluate.py
 
 **1. Repositório público no GitHub** (fork do repositório base) contendo:
 
-- Todo o código-fonte implementado
-- Arquivo `prompts/bug_to_user_story_v2.yml` 100% preenchido e funcional
-- Arquivo `README.md` atualizado
+- Todo o código-fonte implementado **{ ok }**
+- Arquivo `prompts/bug_to_user_story_v2.yml` 100% preenchido e funcional  **{ ok }**
+- Arquivo `README.md` atualizado **{ ok }**
 
 **2. README.md deve conter:**
 
 **A) Seção "Técnicas Aplicadas (Fase 2)":**
 
 - Quais técnicas avançadas você escolheu para refatorar os prompts
-  R: Foram utilizadas as técnicas Few-Shot juntamente com Chain-Of-Thought (CoT).
+
+  **R: Foram utilizadas as técnicas Few-Shot juntamente com Chain-Of-Thought (CoT).**
 
 - Justificativa de por que escolheu cada técnica
-  R: Foi utilizado Few-Shot para que o modelo soubesse que tipo de informação seria tratada, qual era a entrada e saída esperada. Foi feito desta forma para que o modelo não gerasse user storeis superficiais e aleatórias.
-   Também foi utilizado juntamente o CoT para que faça com que o modelo pense nas possibilidades, entenda melhor qual é o contexto e não dê a primeira resposta,
-   mas sim uma resposta que tenha maior probabilidade de sucesso. Ao integrar o CoT dentro dos exemplos do few-shot, estamos forçando o modelo a raciocinar
-   passo a passo, incluindo o que foi descartado e porque foi descartado, assim conseguimos reduzir o risco do modelo dar a primeira resposta óbvia ou alucinar.
+
+  **R: Foi utilizado Few-Shot para que o modelo soubesse que tipo de informação seria tratada, qual era a entrada e saída esperada. Foi feito desta forma para que o modelo não gerasse user storeis superficiais e aleatórias.**
+
+   **Também foi utilizado juntamente o CoT para que faça com que o modelo pense nas possibilidades, entenda melhor qual é o contexto e não dê a primeira resposta, mas sim uma resposta que tenha maior probabilidade de sucesso. Ao integrar o CoT dentro dos exemplos do few-shot, estamos forçando o modelo a raciocinar passo a passo, incluindo o que foi descartado e porque foi descartado, assim conseguimos reduzir o risco do modelo dar a primeira resposta óbvia ou alucinar.**
 
 - Exemplos práticos de como aplicou cada técnica
-   Seguem os 3 exemplos que foram utilizados que acontecerão todos no meu trabalho no dia em que esse texto foi produzido:
 
- Exemplo 1:   
+   **R: Seguem os 3 exemplos que foram utilizados que acontecerão todos no meu trabalho no dia em que esse texto foi produzido:**
+
+ **Exemplo 1:**
+  
   Bug Report: "Cliquei no botão [Imprimir] na tela de relatório mensal, o loading apareceu por 2 segundos e sumiu, mas nada foi enviado para a impressora.
     Tentei 3 vezes e o mesmo aconteceu. Outros botões da tela funcionam normal."
+  
   Raciocínio: O usuário está na tela de relatório mensal. A ação desejada é imprimir. O problema é que o sistema aparenta processar mas não conclui o envio para a impressora.
     Como outros botões funcionam, o problema é específico da função de impressão. O valor de negócio não é só "imprimir" — é poder compartilhar o relatório fisicamente com outras pessoas.
     Descartei focar no erro técnico do loading pois isso é detalhe de implementação, não de negócio.
+  
   User Story: "Como um usuário, eu quero imprimir um documento, para que eu possa compartilhar fisicamente o conteúdo com outras pessoas."
 
- Examplo 2:
+
+ **Exemplo 2:**
+
   Bug Report: "Fui em Exportações > Notas Fiscais > Download em Lote, selecionei o período de janeiro e cliquei em baixar.
     Apareceu a mensagem [Access Denied] na tela e o download não iniciou.
     Meu colega consegue baixar normalmente com o login dele."
+  
   Raciocínio: O usuário sabe exatamente onde está e o que quer fazer — baixar XMLs em lote. O problema é um erro de permissão que afeta apenas ele, não todos os usuários.
     Isso indica um problema de controle de acesso, não de funcionalidade. O valor de negócio é ter os arquivos disponíveis para uso externo, provavelmente envio à contabilidade.
     Descartei centrar a story no erro de permissão pois o foco deve ser na necessidade do usuário, não no sintoma técnico.
+  
   User Story: "Como um usuário, eu quero baixar o arquivo zip de XMLs sem erros de permissão, para que eu possa enviar para a contabilidade."
 
-Examplo 3:
+
+**Exemplo 3:**
+
   Bug Report: "Oi, encontrei dois cadastros do cliente João da Silva com o mesmo CPF 123.456.789-00, e os dois têm pedidos e histórico de compras.
     Não sei qual é o original e não consigo mesclar porque o sistema não deixa ter CPF repetido.
     O que eu faço com os pedidos que estão no cadastro errado?"
@@ -364,7 +375,11 @@ Examplo 3:
 
 **3. Evidências no LangSmith:**
 
-- Prompt v2 - Link público -> https://smith.langchain.com/prompts/bug_to_user_story_v2/e85fff97?organizationId=e70a30b1-8bdc-4935-b105-8db1556e70aa
+- Prompt v2 
+
+Link público -> https://smith.langchain.com/hub/guilherme-rossi/bug_to_user_story_v2
+
+
 - Link público (ou screenshots) do dashboard do LangSmith
 - Devem estar visíveis:
   - Dataset de avaliação com 15 exemplos
