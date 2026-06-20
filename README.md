@@ -329,14 +329,14 @@ python src/evaluate.py
 
   **User Story:** "Como um usuário financeiro, eu quero gerar o relatório financeiro mesmo com grande volume de transações, para que eu possa analisar os dados completos do período sem falhas.
 
-  Critérios de Aceitação:
+  **Critérios de Aceitação:**
   - Dado que estou na tela de relatórios financeiros
   - Quando seleciono um período com qualquer volume de transações
   - Então o relatório deve ser gerado com sucesso
   - E não deve ocorrer erro mesmo com mais de 10.000 transações
   - E o usuário deve visualizar o progresso da geração (loading/percentual)
 
-  Contexto Técnico:
+  **Contexto Técnico:**
   - Erro atual: 'Erro 500 - Falha ao gerar relatório' para períodos com mais de 10.000 transações
   - Causa raiz (logs): OutOfMemoryError no módulo de exportação para PDF
   - Sugestão: processar a exportação em lotes/streaming em vez de carregar todas as transações em memória de uma vez"
@@ -355,7 +355,7 @@ python src/evaluate.py
 
   **User Story:** "Como um usuário, eu quero baixar o arquivo zip de XMLs do período selecionado sem erros de permissão, para que eu possa enviar para a contabilidade.
 
-  Critérios de Aceitação:
+  **Critérios de Aceitação:**
   - Dado que tenho permissão de acesso ao módulo de Notas Fiscais
   - Quando seleciono um período e clico em baixar em lote
   - Então o download deve iniciar normalmente
@@ -376,14 +376,14 @@ python src/evaluate.py
 
   **User Story:** "Como atendente, eu quero uma funcionalidade para mesclar cadastros duplicados que compartilham o mesmo CPF e possuem movimentações, para que eu possa consolidar o histórico do cliente em um único registro sem perder dados.
 
-  Critérios de Aceitação:
+  **Critérios de Aceitação:**
   - Dado que existem dois cadastros com o mesmo CPF e ambos possuem pedidos/histórico
   - Quando o atendente solicita a mesclagem dos cadastros
   - Então o sistema deve permitir a mesclagem mesmo com CPF duplicado entre os dois registros
   - E todo o histórico de pedidos e compras de ambos os cadastros deve ser preservado no registro final
   - E o cadastro descartado deve ser desativado, não excluído, mantendo rastreabilidade
 
-  Contexto do Bug:
+  **Contexto do Bug:**
   - Problema: sistema bloqueia a mesclagem ao detectar CPF repetido entre os dois cadastros
   - Risco: exclusão manual de um dos cadastros causaria perda permanente de pedidos e histórico de compras
   - Cenário crítico: clientes com cadastros duplicados e movimentação ativa em ambos os registros"
@@ -400,7 +400,16 @@ python src/evaluate.py
 
   **R:** Ver tracing detalhado de 3 exemplos na seção "Evidências no LangSmith" abaixo.
 
+  **Dataset de avaliação (15 exemplos)**
+
   ![Dataset de avaliação com 15 exemplos](screenshots/dataset-15-exemplos.png)
+
+  **Execução do teste - v1**
+
+  ![Execução completa do v1](screenshots/execucoes-v1.png)
+
+  **Execução do teste - v2**
+
   ![Execuções do prompt v2 com notas >= 0.8](screenshots/execucoes-v2-aprovado.png)
 
 - Tabela comparativa: prompts ruins (v1) vs prompts otimizados (v2)
@@ -419,8 +428,6 @@ python src/evaluate.py
   > **Observação honesta:** ao avaliar o v1 original (não refatorado) com o mesmo modelo (`gemini-3.1-flash-lite`), o resultado ficou praticamente idêntico ao v2. Isso difere do exemplo ilustrativo do template (que mostra v1 reprovado com ~0.48). A explicação mais provável é que `gemini-3.1-flash-lite` já é um modelo capaz o suficiente para gerar uma user story razoável mesmo a partir de um prompt simples e sem exemplos — então, neste dataset específico, as métricas LLM-as-judge não capturam uma diferença grande entre os dois prompts. Isso não invalida a refatoração: o v2 ainda garante saída estruturada e previsível (Critérios de Aceitação + seções condicionais conforme a complexidade do bug), o que reduz variância e facilita a vida do time de desenvolvimento, mesmo que as 5 métricas numéricas avaliadas não reflitam isso diretamente.
 
   Execução completa do v1 (15/15 exemplos do dataset, modelo `gemini-3.1-flash-lite`):
-
-  ![Execução completa do v1](screenshots/execucoes-v1.png)
 
   ```
   [1/15] F1:0.79 Clarity:0.75 Precision:0.83
