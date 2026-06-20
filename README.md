@@ -396,6 +396,14 @@ python .\src\push_prompts.py       # push do prompt otimizado
 python .\src\evaluate.py             # avaliação das métricas
 ```
 
+> **Nota sobre o rate limit (sleep):** o `src/evaluate.py` faz várias chamadas à API do Gemini por exemplo do dataset (1 chamada de geração da user story + 3 chamadas de avaliação via LLM-as-judge: F1, Clarity e Precision). Com o tier gratuito da API, isso pode estourar o limite de requisições por minuto (RPM) e até o limite diário (RPD), causando erro 429 (ResourceExhausted).
+>
+> Para evitar isso, foi adicionada uma pausa automática controlada pelo `.env`:
+> - `RATE_LIMIT_SLEEP_ENABLED`: ativa (`true`) ou desativa (`false`) a pausa
+> - `RATE_LIMIT_SLEEP_CALL_THRESHOLD`: número de chamadas acumuladas à API que dispara a pausa (padrão: 12)
+> - `RATE_LIMIT_SLEEP_SECONDS`: duração da pausa em segundos (padrão: 60)
+>
+> Regra aplicada: cada exemplo avaliado soma 1 ou 4 chamadas ao contador (1 se a geração falhar, 4 se for avaliado com sucesso). Quando o total acumulado passa do `RATE_LIMIT_SLEEP_CALL_THRESHOLD`, o script imprime um aviso no console e aguarda `RATE_LIMIT_SLEEP_SECONDS` antes de continuar, depois zera o contador. Como o modelo configurado (`gemini-3.1-flash-lite`) tem 15 RPM no tier gratuito, o threshold de 12 chamadas mantém uma margem de segurança antes de bater no limite.
 
 **3. Evidências no LangSmith:**
 
