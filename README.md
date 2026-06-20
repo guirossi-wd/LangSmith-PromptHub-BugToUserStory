@@ -96,9 +96,10 @@ from langchain_google_genai import ChatGoogleGenerativeAI  # LLM Gemini
 ## Gemini (modelo free)
 
 - Crie uma **API Key** da Google: https://aistudio.google.com/app/apikey
-- **Modelo de LLM para responder**: `gemini-2.5-flash`
-- **Modelo de LLM para avaliação**: `gemini-2.5-flash`
-- **Limite:** 15 req/min, 1500 req/dia
+- **Modelo de LLM para responder**: `gemini-3.1-flash-lite`
+- **Modelo de LLM para avaliação**: `gemini-3.1-flash-lite`
+- **Limite (tier free):** 15 RPM (requisições/min), 250k TPM (tokens/min), 500 RPD (requisições/dia)
+- Ver nota sobre o controle de rate limit (sleep automático) na seção "Como Executar"
 
 ---
 
@@ -316,15 +317,29 @@ python src/evaluate.py
    **R: Seguem os 3 exemplos que foram utilizados que acontecerão todos no meu trabalho no dia em que esse texto foi produzido:**
 
  **Exemplo 1:**
-  
-  **Bug Report:** "Cliquei no botão [Imprimir] na tela de relatório mensal, o loading apareceu por 2 segundos e sumiu, mas nada foi enviado para a impressora.
-    Tentei 3 vezes e o mesmo aconteceu. Outros botões da tela funcionam normal."
-  
-  **Raciocínio:** O usuário está na tela de relatório mensal. A ação desejada é imprimir. O problema é que o sistema aparenta processar mas não conclui o envio para a impressora.
-    Como outros botões funcionam, o problema é específico da função de impressão. O valor de negócio não é só "imprimir" — é poder compartilhar o relatório fisicamente com outras pessoas.
-    Descartei focar no erro técnico do loading pois isso é detalhe de implementação, não de negócio.
-  
-  **User Story:** "Como um usuário, eu quero imprimir um documento, para que eu possa compartilhar fisicamente o conteúdo com outras pessoas."
+
+  **Bug Report:** "Ao clicar em [Gerar Relatório Financeiro], o sistema processa por cerca de 30 segundos e retorna 'Erro 500 - Falha ao gerar relatório'.
+    Isso só acontece quando o período selecionado tem mais de 10.000 transações — períodos menores funcionam normalmente.
+    Nos logs do servidor aparece 'OutOfMemoryError' no módulo de exportação para PDF."
+
+  **Raciocínio:** O usuário está na tela de relatórios financeiros e quer gerar o relatório financeiro do período escolhido. O problema não é genérico — só ocorre com grande volume de transações,
+    indicando um limite técnico (memória) e não uma falha de lógica de negócio. O valor de negócio é poder analisar os dados financeiros completos do período, independente do volume.
+    Descartei focar só em "corrigir o erro 500" pois isso é sintoma; o objetivo real do usuário é confiabilidade na geração do relatório em qualquer volume de dados.
+    Por ser um bug técnico com causa raiz identificável nos logs, incluí uma seção de Contexto Técnico para orientar o desenvolvedor na correção.
+
+  **User Story:** "Como um usuário financeiro, eu quero gerar o relatório financeiro mesmo com grande volume de transações, para que eu possa analisar os dados completos do período sem falhas.
+
+  Critérios de Aceitação:
+  - Dado que estou na tela de relatórios financeiros
+  - Quando seleciono um período com qualquer volume de transações
+  - Então o relatório deve ser gerado com sucesso
+  - E não deve ocorrer erro mesmo com mais de 10.000 transações
+  - E o usuário deve visualizar o progresso da geração (loading/percentual)
+
+  Contexto Técnico:
+  - Erro atual: 'Erro 500 - Falha ao gerar relatório' para períodos com mais de 10.000 transações
+  - Causa raiz (logs): OutOfMemoryError no módulo de exportação para PDF
+  - Sugestão: processar a exportação em lotes/streaming em vez de carregar todas as transações em memória de uma vez"
 
 
  **Exemplo 2:**
@@ -332,12 +347,20 @@ python src/evaluate.py
   **Bug Report:** "Fui em Exportações > Notas Fiscais > Download em Lote, selecionei o período de janeiro e cliquei em baixar.
     Apareceu a mensagem [Access Denied] na tela e o download não iniciou.
     Meu colega consegue baixar normalmente com o login dele."
-  
+
   **Raciocínio:** O usuário sabe exatamente onde está e o que quer fazer — baixar XMLs em lote. O problema é um erro de permissão que afeta apenas ele, não todos os usuários.
     Isso indica um problema de controle de acesso, não de funcionalidade. O valor de negócio é ter os arquivos disponíveis para uso externo, provavelmente envio à contabilidade.
     Descartei centrar a story no erro de permissão pois o foco deve ser na necessidade do usuário, não no sintoma técnico.
-  
-  **User Story:** "Como um usuário, eu quero baixar o arquivo zip de XMLs sem erros de permissão, para que eu possa enviar para a contabilidade."
+    Por ser um problema de acesso simples e sem causa técnica detalhada a documentar, a user story só precisa dos Critérios de Aceitação, sem seção de Contexto Técnico.
+
+  **User Story:** "Como um usuário, eu quero baixar o arquivo zip de XMLs do período selecionado sem erros de permissão, para que eu possa enviar para a contabilidade.
+
+  Critérios de Aceitação:
+  - Dado que tenho permissão de acesso ao módulo de Notas Fiscais
+  - Quando seleciono um período e clico em baixar em lote
+  - Então o download deve iniciar normalmente
+  - E o arquivo zip deve conter todos os XMLs do período selecionado
+  - E não deve aparecer mensagem de Access Denied para usuários com permissão válida"
 
 
 **Exemplo 3:**
@@ -345,20 +368,101 @@ python src/evaluate.py
   **Bug Report:** "Oi, encontrei dois cadastros do cliente João da Silva com o mesmo CPF 123.456.789-00, e os dois têm pedidos e histórico de compras.
     Não sei qual é o original e não consigo mesclar porque o sistema não deixa ter CPF repetido.
     O que eu faço com os pedidos que estão no cadastro errado?"
-  
+
   **Raciocínio:** O usuário é uma atendente, não um cliente final. O problema não é só duplicidade — é que ambos os cadastros têm movimentação e o sistema bloqueia a mesclagem por CPF repetido.
     Simplesmente deletar um cadastro causaria perda de histórico. O valor de negócio é manter a integridade dos dados do cliente em um único registro confiável.
     Descartei uma story focada em "remover duplicatas" pois o risco de perda de dados torna a mesclagem a solução correta.
-  
-  **User Story:** "Como atendente, eu quero uma funcionalidade para mesclar cadastros duplicados que compartilham o mesmo CPF e possuem movimentações, para que eu possa consolidar o histórico do cliente em um único registro sem perder dados."
+    Por envolver risco de perda de dados em produção, documentei esse risco numa seção de Contexto do Bug, para que o time técnico entenda a gravidade antes de implementar.
+
+  **User Story:** "Como atendente, eu quero uma funcionalidade para mesclar cadastros duplicados que compartilham o mesmo CPF e possuem movimentações, para que eu possa consolidar o histórico do cliente em um único registro sem perder dados.
+
+  Critérios de Aceitação:
+  - Dado que existem dois cadastros com o mesmo CPF e ambos possuem pedidos/histórico
+  - Quando o atendente solicita a mesclagem dos cadastros
+  - Então o sistema deve permitir a mesclagem mesmo com CPF duplicado entre os dois registros
+  - E todo o histórico de pedidos e compras de ambos os cadastros deve ser preservado no registro final
+  - E o cadastro descartado deve ser desativado, não excluído, mantendo rastreabilidade
+
+  Contexto do Bug:
+  - Problema: sistema bloqueia a mesclagem ao detectar CPF repetido entre os dois cadastros
+  - Risco: exclusão manual de um dos cadastros causaria perda permanente de pedidos e histórico de compras
+  - Cenário crítico: clientes com cadastros duplicados e movimentação ativa em ambos os registros"
 
 
 
 **B) Seção "Resultados Finais":**
 
 - Link público do seu dashboard do LangSmith mostrando as avaliações
+
+  **R:** https://smith.langchain.com/projects/prompt-optimization-challenge-resolved
+
 - Screenshots das avaliações com as notas mínimas de 0.8 atingidas
+
+  **R:** Ver tracing detalhado de 3 exemplos na seção "Evidências no LangSmith" abaixo.
+
+  ![Dataset de avaliação com 15 exemplos](screenshots/dataset-15-exemplos.png)
+  ![Execuções do prompt v2 com notas >= 0.8](screenshots/execucoes-v2-aprovado.png)
+
 - Tabela comparativa: prompts ruins (v1) vs prompts otimizados (v2)
+
+  **R:** Os valores de v1 abaixo são os do exemplo ilustrativo deste README (seção "Exemplo no CLI"); os valores de v2 são da execução real de `python src/evaluate.py` após a refatoração com Few-Shot + CoT (3 exemplos, cobrindo bug simples, bug com causa técnica em log e bug com risco de negócio).
+
+  | Métrica | v1 (`leonanluppi/bug_to_user_story_v1`, real) | v2 (otimizado, real) | Status |
+  |---|---|---|---|
+  | Helpfulness | 0.89 ✓ | 0.87 ✓ | Aprovado (ambos) |
+  | Correctness | 0.86 ✓ | 0.88 ✓ | Aprovado (ambos) |
+  | F1-Score | 0.86 ✓ | 0.88 ✓ | Aprovado (ambos) |
+  | Clarity | 0.91 ✓ | 0.87 ✓ | Aprovado (ambos) |
+  | Precision | 0.86 ✓ | 0.87 ✓ | Aprovado (ambos) |
+  | **Média Geral** | **0.8748** | **0.8749** | **Aprovado (ambos)** |
+
+  > **Observação honesta:** ao avaliar o v1 original (não refatorado) com o mesmo modelo (`gemini-3.1-flash-lite`), o resultado ficou praticamente idêntico ao v2. Isso difere do exemplo ilustrativo do template (que mostra v1 reprovado com ~0.48). A explicação mais provável é que `gemini-3.1-flash-lite` já é um modelo capaz o suficiente para gerar uma user story razoável mesmo a partir de um prompt simples e sem exemplos — então, neste dataset específico, as métricas LLM-as-judge não capturam uma diferença grande entre os dois prompts. Isso não invalida a refatoração: o v2 ainda garante saída estruturada e previsível (Critérios de Aceitação + seções condicionais conforme a complexidade do bug), o que reduz variância e facilita a vida do time de desenvolvimento, mesmo que as 5 métricas numéricas avaliadas não reflitam isso diretamente.
+
+  Execução completa do v1 (15/15 exemplos do dataset, modelo `gemini-3.1-flash-lite`):
+
+  ![Execução completa do v1](screenshots/execucoes-v1.png)
+
+  ```
+  [1/15] F1:0.79 Clarity:0.75 Precision:0.83
+  [2/15] F1:0.87 Clarity:0.75 Precision:0.83
+  [3/15] F1:0.79 Clarity:0.85 Precision:0.83
+  [4/15] F1:0.64 Clarity:0.90 Precision:0.83
+  [5/15] F1:0.79 Clarity:0.95 Precision:0.90
+  [6/15] F1:0.90 Clarity:0.95 Precision:0.93
+  [7/15] F1:0.97 Clarity:0.95 Precision:0.93
+  [8/15] F1:0.85 Clarity:0.95 Precision:0.93
+  [9/15] F1:0.85 Clarity:0.95 Precision:0.93
+  [10/15] F1:0.85 Clarity:0.95 Precision:0.90
+  [11/15] F1:0.90 Clarity:0.95 Precision:0.73
+  [12/15] F1:0.95 Clarity:0.95 Precision:0.83
+  [13/15] F1:0.95 Clarity:0.95 Precision:0.83
+  [14/15] F1:0.90 Clarity:0.95 Precision:0.83
+  [15/15] F1:0.87 Clarity:0.95 Precision:0.83
+
+  STATUS: APROVADO - Todas as métricas >= 0.8
+  ```
+
+  Execução completa do v2 (15/15 exemplos do dataset, modelo `gemini-3.1-flash-lite`):
+
+  ```
+  [1/15] F1:0.84 Clarity:0.85 Precision:0.83
+  [2/15] F1:0.84 Clarity:0.85 Precision:0.93
+  [3/15] F1:0.82 Clarity:0.85 Precision:0.93
+  [4/15] F1:0.72 Clarity:0.90 Precision:0.83
+  [5/15] F1:0.85 Clarity:0.90 Precision:0.90
+  [6/15] F1:0.97 Clarity:0.90 Precision:0.97
+  [7/15] F1:0.97 Clarity:0.85 Precision:0.93
+  [8/15] F1:0.87 Clarity:0.90 Precision:0.93
+  [9/15] F1:0.90 Clarity:0.95 Precision:0.93
+  [10/15] F1:0.87 Clarity:0.85 Precision:0.83
+  [11/15] F1:0.90 Clarity:0.85 Precision:0.83
+  [12/15] F1:0.87 Clarity:0.85 Precision:0.83
+  [13/15] F1:0.95 Clarity:0.85 Precision:0.87
+  [14/15] F1:0.90 Clarity:0.85 Precision:0.83
+  [15/15] F1:0.95 Clarity:0.85 Precision:0.73
+
+  STATUS: APROVADO - Todas as métricas >= 0.8
+  ```
 
 **C) Seção "Como Executar":**
 
@@ -413,10 +517,96 @@ Link público -> https://smith.langchain.com/hub/guilherme-rossi/bug_to_user_sto
 
 
 - Link público (ou screenshots) do dashboard do LangSmith
+
+  **R:** https://smith.langchain.com/projects/prompt-optimization-challenge-resolved
+
 - Devem estar visíveis:
-  - Dataset de avaliação com 15 exemplos
-  - Execuções dos prompts v2 (otimizados) com notas ≥ 0.8
-  - Tracing detalhado de pelo menos 3 exemplos
+  - Dataset de avaliação com 15 exemplos — ver screenshot na seção "Resultados Finais" (`screenshots/dataset-15-exemplos.png`)
+  - Execuções dos prompts v2 (otimizados) com notas ≥ 0.8 — ver screenshot na seção "Resultados Finais" (`screenshots/execucoes-v2-aprovado.png`)
+  - Tracing detalhado de pelo menos 3 exemplos — ver abaixo
+
+**Tracing detalhado (3 exemplos):**
+
+> Capturado em `prompt-optimization-challenge-resolved`, modelo `gemini-3.1-flash-lite`.
+
+<details>
+<summary><strong>Trace 1 — Geração da User Story (prompt v2)</strong></summary>
+
+| Campo | Valor |
+|---|---|
+| Etapa do pipeline | Geração (prompt principal) |
+| Modelo | `gemini-3.1-flash-lite` |
+| Tokens | 1.299 entrada / 391 saída (1.690 total) |
+
+**Input (`bug_report`):**
+> "Botão de adicionar ao carrinho não funciona no produto ID 1234."
+
+**Output gerado:**
+```
+Raciocínio: O relato é extremamente vago e carece de informações críticas. Como
+especialista, não posso criar uma tarefa útil para o desenvolvedor sem saber se
+o problema é isolado (apenas esse produto), se é um erro de interface (o botão
+não clica), um erro de comunicação com o servidor (o botão clica, mas nada
+acontece) ou um problema de estado do produto (ex: estoque zerado). O valor de
+negócio é garantir que o fluxo de vendas não seja interrompido. Para evitar que
+o desenvolvedor perca tempo tentando adivinhar o problema, a User Story deve
+focar na necessidade de compra, mas os Critérios de Aceitação e o Contexto
+devem exigir a investigação da causa raiz, já que o relato atual é insuficiente
+para reprodução.
+
+User Story: "Como um cliente, eu quero adicionar o produto ao carrinho com
+sucesso, para que eu possa prosseguir com a minha compra sem interrupções.
+
+Critérios de Aceitação:
+- Dado que estou na página do produto ID 1234
+- Quando clico no botão 'Adicionar ao Carrinho'
+- Então o item deve ser adicionado ao carrinho de compras
+- E o sistema deve exibir uma confirmação visual de sucesso
+- E o contador do carrinho deve ser atualizado corretamente
+
+Contexto do Bug:
+- Problema relatado: Botão de adicionar ao carrinho não responde para o
+  produto ID 1234.
+- Observação: O relato é insuficiente para diagnóstico. É necessário investigar
+  se o problema é específico deste produto (ex: erro de configuração de
+  estoque/preço) ou um erro genérico de front-end/API que está afetando este
+  item.
+- Ação necessária: Reproduzir o cenário no ambiente de QA, verificar logs de
+  rede (Console/Network) e validar se o produto possui estoque disponível e
+  preço configurado."
+```
+
+</details>
+
+<details>
+<summary><strong>Trace 2 — Avaliação de Clareza (Clarity, LLM-as-judge) sobre o Trace 1</strong></summary>
+
+| Campo | Valor |
+|---|---|
+| Etapa do pipeline | Avaliação - `evaluate_clarity()` |
+| Score | **0.85** ✓ |
+
+**Reasoning do judge:**
+> "A resposta é excelente na estruturação técnica e profissional, superando a referência ao incluir um contexto de investigação necessário para um bug real. A organização é impecável e a linguagem é precisa. O único ponto de redução na nota é a concisão: a inclusão do 'Raciocínio' inicial, embora útil para o avaliador, torna a resposta mais longa do que o estritamente necessário para o usuário final. No entanto, a clareza e a utilidade prática da resposta são superiores, transformando um relato vago em uma tarefa acionável de alta qualidade."
+
+</details>
+
+<details>
+<summary><strong>Trace 3 — Avaliação de F1-Score (Precision/Recall, LLM-as-judge) sobre outro exemplo</strong></summary>
+
+| Campo | Valor |
+|---|---|
+| Etapa do pipeline | Avaliação - `evaluate_f1_score()` |
+| Precision | **0.90** |
+| Recall | **0.90** |
+
+**Input (`bug_report`):**
+> "Campo de email aceita texto sem @, permitindo cadastros inválidos."
+
+**Reasoning do judge:**
+> "A resposta gerada é de alta qualidade e atende aos requisitos. A precisão é alta, pois todas as informações são pertinentes ao problema de validação. O recall é quase total, cobrindo a User Story e os Critérios de Aceitação. A única pequena divergência é a mudança do papel do usuário (de 'usuário criando conta' para 'administrador'), o que altera levemente o contexto original, mas mantém a integridade da regra de negócio solicitada."
+
+</details>
 
 ---
 
