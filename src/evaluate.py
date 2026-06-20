@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 from langsmith import Client
 from langchain import hub
 from langchain_core.prompts import ChatPromptTemplate
-from utils import check_env_vars, format_score, print_section_header, get_llm as get_configured_llm
+from utils import check_env_vars, format_score, print_section_header, rate_limit_sleep, get_llm as get_configured_llm
 from metrics import evaluate_f1_score, evaluate_clarity, evaluate_precision
 
 load_dotenv()
@@ -201,17 +201,21 @@ def evaluate_prompt(
 
         for i, example in enumerate(examples, 1):
             result = evaluate_prompt_on_example(prompt_template, example, llm)
+            calls_made = 1  # chamada de geração da user story
 
             if result["answer"]:
                 f1 = evaluate_f1_score(result["question"], result["answer"], result["reference"])
                 clarity = evaluate_clarity(result["question"], result["answer"], result["reference"])
                 precision = evaluate_precision(result["question"], result["answer"], result["reference"])
+                calls_made += 3  # chamadas dos 3 judges (F1, Clarity, Precision)
 
                 f1_scores.append(f1["score"])
                 clarity_scores.append(clarity["score"])
                 precision_scores.append(precision["score"])
 
                 print(f"      [{i}/{len(examples)}] F1:{f1['score']:.2f} Clarity:{clarity['score']:.2f} Precision:{precision['score']:.2f}")
+
+            rate_limit_sleep(calls_made=calls_made)
 
         avg_f1 = sum(f1_scores) / len(f1_scores) if f1_scores else 0.0
         avg_clarity = sum(clarity_scores) / len(clarity_scores) if clarity_scores else 0.0

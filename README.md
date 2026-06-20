@@ -1,15 +1,6 @@
 # Pull, Otimização e Avaliação de Prompts com LangChain e LangSmith
 
-Executar ao iniciar o dia
-.\venv\Scripts\Activate.ps1
-
-Seções do desafio
-1 ok
-2 ok
-3 ok
-3.5 ok - Public Link -> https://smith.langchain.com/hub/guilherme-rossi/bug_to_user_story_v2
-4 - ok -  pytest tests/test_prompts.py -v   
-5 - 
+> **Importante:** Ver seção entregável para analisar os resultados.
 
 ## Objetivo
 
@@ -326,38 +317,40 @@ python src/evaluate.py
 
  **Exemplo 1:**
   
-  Bug Report: "Cliquei no botão [Imprimir] na tela de relatório mensal, o loading apareceu por 2 segundos e sumiu, mas nada foi enviado para a impressora.
+  **Bug Report:** "Cliquei no botão [Imprimir] na tela de relatório mensal, o loading apareceu por 2 segundos e sumiu, mas nada foi enviado para a impressora.
     Tentei 3 vezes e o mesmo aconteceu. Outros botões da tela funcionam normal."
   
-  Raciocínio: O usuário está na tela de relatório mensal. A ação desejada é imprimir. O problema é que o sistema aparenta processar mas não conclui o envio para a impressora.
+  **Raciocínio:** O usuário está na tela de relatório mensal. A ação desejada é imprimir. O problema é que o sistema aparenta processar mas não conclui o envio para a impressora.
     Como outros botões funcionam, o problema é específico da função de impressão. O valor de negócio não é só "imprimir" — é poder compartilhar o relatório fisicamente com outras pessoas.
     Descartei focar no erro técnico do loading pois isso é detalhe de implementação, não de negócio.
   
-  User Story: "Como um usuário, eu quero imprimir um documento, para que eu possa compartilhar fisicamente o conteúdo com outras pessoas."
+  **User Story:** "Como um usuário, eu quero imprimir um documento, para que eu possa compartilhar fisicamente o conteúdo com outras pessoas."
 
 
  **Exemplo 2:**
 
-  Bug Report: "Fui em Exportações > Notas Fiscais > Download em Lote, selecionei o período de janeiro e cliquei em baixar.
+  **Bug Report:** "Fui em Exportações > Notas Fiscais > Download em Lote, selecionei o período de janeiro e cliquei em baixar.
     Apareceu a mensagem [Access Denied] na tela e o download não iniciou.
     Meu colega consegue baixar normalmente com o login dele."
   
-  Raciocínio: O usuário sabe exatamente onde está e o que quer fazer — baixar XMLs em lote. O problema é um erro de permissão que afeta apenas ele, não todos os usuários.
+  **Raciocínio:** O usuário sabe exatamente onde está e o que quer fazer — baixar XMLs em lote. O problema é um erro de permissão que afeta apenas ele, não todos os usuários.
     Isso indica um problema de controle de acesso, não de funcionalidade. O valor de negócio é ter os arquivos disponíveis para uso externo, provavelmente envio à contabilidade.
     Descartei centrar a story no erro de permissão pois o foco deve ser na necessidade do usuário, não no sintoma técnico.
   
-  User Story: "Como um usuário, eu quero baixar o arquivo zip de XMLs sem erros de permissão, para que eu possa enviar para a contabilidade."
+  **User Story:** "Como um usuário, eu quero baixar o arquivo zip de XMLs sem erros de permissão, para que eu possa enviar para a contabilidade."
 
 
 **Exemplo 3:**
 
-  Bug Report: "Oi, encontrei dois cadastros do cliente João da Silva com o mesmo CPF 123.456.789-00, e os dois têm pedidos e histórico de compras.
+  **Bug Report:** "Oi, encontrei dois cadastros do cliente João da Silva com o mesmo CPF 123.456.789-00, e os dois têm pedidos e histórico de compras.
     Não sei qual é o original e não consigo mesclar porque o sistema não deixa ter CPF repetido.
     O que eu faço com os pedidos que estão no cadastro errado?"
-  Raciocínio: O usuário é uma atendente, não um cliente final. O problema não é só duplicidade — é que ambos os cadastros têm movimentação e o sistema bloqueia a mesclagem por CPF repetido.
+  
+  **Raciocínio:** O usuário é uma atendente, não um cliente final. O problema não é só duplicidade — é que ambos os cadastros têm movimentação e o sistema bloqueia a mesclagem por CPF repetido.
     Simplesmente deletar um cadastro causaria perda de histórico. O valor de negócio é manter a integridade dos dados do cliente em um único registro confiável.
     Descartei uma story focada em "remover duplicatas" pois o risco de perda de dados torna a mesclagem a solução correta.
-  User Story: "Como atendente, eu quero uma funcionalidade para mesclar cadastros duplicados que compartilham o mesmo CPF e possuem movimentações, para que eu possa consolidar o histórico do cliente em um único registro sem perder dados."
+  
+  **User Story:** "Como atendente, eu quero uma funcionalidade para mesclar cadastros duplicados que compartilham o mesmo CPF e possuem movimentações, para que eu possa consolidar o histórico do cliente em um único registro sem perder dados."
 
 
 
@@ -373,23 +366,24 @@ python src/evaluate.py
 - Pré-requisitos e dependências
 - Comandos para cada fase do projeto
 
-#configuração inicial
+#Configuração Inicial
+
 #Criar o ambiente virtual
 ```bash
 python -m venv venv
 ```
 
-#ativar o venv
+#Ativar o venv
 ```bash
  .\venv\Scripts\Activate.ps1
 ```
 
- #instalar requirements.txt
+ #Instalar as libs
 ```bash
  pip install -r requirements.txt
 ```
 
- #configurar o .env e preencher as variaveis
+ #Configurar o .env e preencher as variaveis
 ```bash
 Copy-Item .env.example .env
 ```
@@ -401,7 +395,6 @@ pytest tests\test_prompts.py -v    # testes
 python .\src\push_prompts.py       # push do prompt otimizado
 python .\src\evaluate.py             # avaliação das métricas
 ```
-
 
 
 **3. Evidências no LangSmith:**

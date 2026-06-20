@@ -3,6 +3,7 @@ Funções auxiliares para o projeto de otimização de prompts.
 """
 
 import os
+import time
 import yaml
 import json
 from typing import Dict, Any, Optional
@@ -227,6 +228,38 @@ def get_llm(model: Optional[str] = None, temperature: float = 0.0):
             f"Provider '{provider}' não suportado.\n"
             f"Use 'openai' ou 'google' na variável LLM_PROVIDER do .env"
         )
+
+
+_rate_limit_call_count = 0
+
+
+def rate_limit_sleep(calls_made: int = 1):
+    """
+    Acumula chamadas feitas à API e pausa a execução quando o total
+    acumulado passa do limite configurado, para evitar estourar a cota
+    gratuita (RPM) da API.
+
+    Controlado pelas variáveis de ambiente:
+    - RATE_LIMIT_SLEEP_ENABLED: "true" para ativar, "false" para seguir sem pausa
+    - RATE_LIMIT_SLEEP_CALL_THRESHOLD: nº de chamadas acumuladas que dispara a pausa (padrão: 12)
+    - RATE_LIMIT_SLEEP_SECONDS: duração da pausa em segundos (padrão: 60)
+
+    Args:
+        calls_made: quantas chamadas reais à API acabaram de ser feitas
+    """
+    global _rate_limit_call_count
+
+    if os.getenv('RATE_LIMIT_SLEEP_ENABLED', 'false').lower() != 'true':
+        return
+
+    _rate_limit_call_count += calls_made
+    threshold = int(os.getenv('RATE_LIMIT_SLEEP_CALL_THRESHOLD', '12'))
+
+    if _rate_limit_call_count >= threshold:
+        seconds = int(os.getenv('RATE_LIMIT_SLEEP_SECONDS', '60'))
+        print(f"      {_rate_limit_call_count} chamadas feitas - aguardando {seconds}s para nao exceder a cota gratuita da API...")
+        time.sleep(seconds)
+        _rate_limit_call_count = 0
 
 
 def get_eval_llm(temperature: float = 0.0):
