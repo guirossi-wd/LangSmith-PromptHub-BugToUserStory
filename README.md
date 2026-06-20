@@ -373,6 +373,37 @@ python src/evaluate.py
 - Pré-requisitos e dependências
 - Comandos para cada fase do projeto
 
+#configuração inicial
+#Criar o ambiente virtual
+```bash
+python -m venv venv
+```
+
+#ativar o venv
+```bash
+ .\venv\Scripts\Activate.ps1
+```
+
+ #instalar requirements.txt
+```bash
+ pip install -r requirements.txt
+```
+
+ #configurar o .env e preencher as variaveis
+```bash
+Copy-Item .env.example .env
+```
+
+#Rodar os seguintes programas
+```bash
+python .\src\pull_prompts.py       # pull do prompt padrão
+pytest tests\test_prompts.py -v    # testes
+python .\src\push_prompts.py       # push do prompt otimizado
+python .\src\evaluate.py             # avaliação das métricas
+```
+
+
+
 **3. Evidências no LangSmith:**
 
 - Prompt v2 
